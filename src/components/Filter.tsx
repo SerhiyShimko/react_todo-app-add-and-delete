@@ -104,7 +104,9 @@ export const Filter: React.FC<Props> = ({
             className={classNames('filter__link', {
               selected: selectedFilter === button.typeFilter,
             })}
-            data-cy="FilterLinkAll"
+            data-cy={
+              button.typeFilter === TypeFilter.All ? 'FilterLinkAll' : ''
+            }
             onClick={e => {
               e.preventDefault();
               setSelectedFilter(button.typeFilter);
