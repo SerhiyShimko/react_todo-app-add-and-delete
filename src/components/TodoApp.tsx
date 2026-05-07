@@ -19,7 +19,7 @@ export const TodoApp: React.FC<Props> = ({ setError }) => {
   const [todos, setTodos] = useState<Todo[] | null>(null);
   const [editing, setEditing] = useState<Todo | null>(null);
   const [loadingTodo, setLoadingTodo] = useState(false);
-  const [activeTodo, setActiveTodo] = useState<Todo | null>(null);
+  const [activeTodos, setActiveTodos] = useState<Todo[] | null>(null);
   const [todosFormServer, setTodosFormServer] = useState<Todo[] | null>(null);
   const [updateAllTodos, setUpdateAllTodo] = useState<UpdateAll>(
     UpdateAll.completed,
@@ -42,7 +42,7 @@ export const TodoApp: React.FC<Props> = ({ setError }) => {
       .finally(() => {
         setEditing(null);
         setLoadingTodo(false);
-        setActiveTodo(null);
+        setActiveTodos(null);
         setTimeout(() => {
           setError('');
         }, 3000);
@@ -66,34 +66,38 @@ export const TodoApp: React.FC<Props> = ({ setError }) => {
 
         setTempTodo({ ...newData, id: 0 });
 
-        Interaction.addTodo(newData)
-          .then(newTodos => {
-            setTodos(oldTodos => {
-              if (oldTodos) {
-                return [...oldTodos, newTodos];
-              }
+        setTimeout(
+          () =>
+            Interaction.addTodo(newData)
+              .then(newTodos => {
+                setTodos(oldTodos => {
+                  if (oldTodos) {
+                    return [...oldTodos, newTodos];
+                  }
 
-              return [newTodos];
-            });
-            setTodosFormServer(oldTodos => {
-              if (oldTodos) {
-                return [...oldTodos, newTodos];
-              }
+                  return [newTodos];
+                });
+                setTodosFormServer(oldTodos => {
+                  if (oldTodos) {
+                    return [...oldTodos, newTodos];
+                  }
 
-              return [newTodos];
-            });
-            setValue('');
-          })
-          .catch(() => {
-            setError('Unable to add a todo');
-          })
-          .finally(() => {
-            setTempTodo(null);
-            setDisabledInput(false);
-            setTimeout(() => {
-              focusInput.current?.focus();
-            }, 0);
-          });
+                  return [newTodos];
+                });
+                setValue('');
+              })
+              .catch(() => {
+                setError('Unable to add a todo');
+              })
+              .finally(() => {
+                setTempTodo(null);
+                setDisabledInput(false);
+                setTimeout(() => {
+                  focusInput.current?.focus();
+                }, 0);
+              }),
+          200,
+        );
       } else {
         setValue('');
         setError('Title should not be empty');
@@ -108,36 +112,44 @@ export const TodoApp: React.FC<Props> = ({ setError }) => {
   const updateTodo = useCallback(
     (newData: Todo) => {
       setLoadingTodo(true);
-      Interaction.updateTodo(newData)
-        .then(() => {})
-        .catch(() => {
-          setError('Unable to update a todo');
-        })
-        .finally(() => {
-          updateList();
-        });
+      setTimeout(() => {
+        Interaction.updateTodo(newData)
+          .then(() => {})
+          .catch(() => {
+            setError('Unable to update a todo');
+          })
+          .finally(() => {
+            updateList();
+          });
+      }, 300);
     },
     [updateList, setError],
   );
 
   const deleteTodo = useCallback(
-    (id: number) => {
+    (id: number, activeTodo: Todo) => {
       setLoadingTodo(true);
-      Interaction.deleteTodo(id)
-        .then(() => {
-          setTodos(prev => (prev ? prev.filter(todo => todo.id !== id) : []));
-          setTodosFormServer(prev =>
-            prev ? prev.filter(todo => todo.id !== id) : [],
-          );
-        })
-        .catch(() => {
-          setError('Unable to delete a todo');
-        })
-        .finally(() => {
-          setTimeout(() => {
-            focusInput.current?.focus();
-          }, 0);
-        });
+      setActiveTodos(current =>
+        current ? [...current, activeTodo] : [activeTodo],
+      );
+      setTimeout(() => {
+        Interaction.deleteTodo(id)
+          .then(() => {
+            setTodos(prev => (prev ? prev.filter(todo => todo.id !== id) : []));
+            setTodosFormServer(prev =>
+              prev ? prev.filter(todo => todo.id !== id) : [],
+            );
+          })
+          .catch(() => {
+            setError('Unable to delete a todo');
+          })
+          .finally(() => {
+            setTimeout(() => {
+              focusInput.current?.focus();
+            }, 0);
+            setLoadingTodo(false);
+          });
+      }, 500);
     },
     [setError, setTodos, setTodosFormServer],
   );
@@ -207,12 +219,12 @@ export const TodoApp: React.FC<Props> = ({ setError }) => {
         <TodoList
           todos={todos}
           updateTodo={prev => updateTodo(prev)}
-          deleteTodo={prev => deleteTodo(prev)}
+          deleteTodo={(prevId, prevTodo) => deleteTodo(prevId, prevTodo)}
           editing={editing}
           setEditing={prev => setEditing(prev)}
           loadingTodo={loadingTodo}
-          setActiveTodo={prev => setActiveTodo(prev)}
-          activeTodo={activeTodo}
+          setActiveTodos={prev => setActiveTodos(prev)}
+          activeTodos={activeTodos}
           tempTodo={tempTodo}
         />
       )}
@@ -222,7 +234,7 @@ export const TodoApp: React.FC<Props> = ({ setError }) => {
           todosFormServer={todosFormServer}
           setTodos={prev => setTodos(prev)}
           updateList={() => updateList()}
-          deleteTodo={prev => deleteTodo(prev)}
+          deleteTodo={(prevId, prevTodo) => deleteTodo(prevId, prevTodo)}
         />
       )}
     </div>

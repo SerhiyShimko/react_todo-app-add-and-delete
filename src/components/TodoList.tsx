@@ -6,12 +6,12 @@ import '../styles/todo.scss';
 type Props = {
   todos: Todo[];
   updateTodo: (todo: Todo) => void;
-  deleteTodo: (id: number) => void;
+  deleteTodo: (id: number, todo: Todo) => void;
   editing: Todo | null;
   setEditing: (todo: Todo | null) => void;
   loadingTodo: boolean;
-  setActiveTodo: (todo: Todo | null) => void;
-  activeTodo: Todo | null;
+  setActiveTodos: (todo: Todo[] | null) => void;
+  activeTodos: Todo[] | null;
   tempTodo: Todo | null;
 };
 
@@ -22,8 +22,8 @@ export const TodoList: React.FC<Props> = ({
   editing,
   setEditing,
   loadingTodo,
-  setActiveTodo,
-  activeTodo,
+  setActiveTodos: setActiveTodo,
+  activeTodos,
   tempTodo,
 }) => {
   const [editedValue, setEditedValue] = useState('');
@@ -40,7 +40,7 @@ export const TodoList: React.FC<Props> = ({
             })}
             onDoubleClick={e => {
               e.preventDefault();
-              setActiveTodo(todo);
+              setActiveTodo([todo]);
               setEditing(todo);
               setEditedValue(todo.title);
             }}
@@ -58,7 +58,7 @@ export const TodoList: React.FC<Props> = ({
                 checked={todo.completed}
                 onChange={() => {
                   updateTodo({ ...todo, completed: !todo.completed });
-                  setActiveTodo(todo);
+                  setActiveTodo([todo]);
                 }}
               />
             </label>
@@ -91,8 +91,8 @@ export const TodoList: React.FC<Props> = ({
               className="todo__remove"
               data-cy="TodoDelete"
               onClick={() => {
-                setActiveTodo(todo);
-                deleteTodo(todo.id);
+                setActiveTodo([todo]);
+                deleteTodo(todo.id, todo);
               }}
             >
               ×
@@ -102,7 +102,10 @@ export const TodoList: React.FC<Props> = ({
               data-cy="TodoLoader"
               className={classNames('modal overlay', {
                 'is-active':
-                  (loadingTodo && activeTodo?.id === todo.id) ||
+                  (loadingTodo &&
+                    activeTodos?.some(
+                      activeTodo => activeTodo.id === todo.id,
+                    )) ||
                   todo.id === tempTodo?.id,
               })}
             >

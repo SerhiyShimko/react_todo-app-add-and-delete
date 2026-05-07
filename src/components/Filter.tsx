@@ -6,7 +6,7 @@ type Props = {
   todosFormServer: Todo[] | null;
   setTodos: (todos: Todo[]) => void;
   updateList: () => void;
-  deleteTodo: (id: number) => void;
+  deleteTodo: (id: number, todo: Todo) => void;
 };
 
 enum TypeFilter {
@@ -28,6 +28,27 @@ function getCount(serverTodos: Todo[] | null) {
 
   return count;
 }
+
+const arrayButtons = [
+  {
+    title: 'All',
+    href: '#/',
+    typeFilter: TypeFilter.All,
+    id: 1,
+  },
+  {
+    title: 'Active',
+    href: '#/active',
+    typeFilter: TypeFilter.Active,
+    id: 2,
+  },
+  {
+    title: 'Completed',
+    href: '#/completed',
+    typeFilter: TypeFilter.Completed,
+    id: 3,
+  },
+];
 
 export const Filter: React.FC<Props> = ({
   setTodos,
@@ -59,11 +80,13 @@ export const Filter: React.FC<Props> = ({
 
   const clearCompleted = useCallback(() => {
     if (todosFormServer) {
-      todosFormServer.map((todo: Todo) => {
+      const needDelete = todosFormServer.map((todo: Todo) => {
         if (todo.completed === true) {
-          deleteTodo(todo.id);
+          return deleteTodo(todo.id, todo);
         }
       });
+
+      Promise.all(needDelete);
     }
   }, [todosFormServer, deleteTodo]);
 
@@ -74,50 +97,29 @@ export const Filter: React.FC<Props> = ({
       </span>
 
       <nav className="filter" data-cy="Filter">
-        <a
-          href="#/"
-          className={classNames('filter__link', {
-            selected: selectedFilter === TypeFilter.All,
-          })}
-          data-cy="FilterLinkAll"
-          onClick={e => {
-            e.preventDefault();
-            setSelectedFilter(TypeFilter.All);
-            updateList();
-          }}
-        >
-          All
-        </a>
-
-        <a
-          href="#/active"
-          className={classNames('filter__link', {
-            selected: selectedFilter === TypeFilter.Active,
-          })}
-          data-cy="FilterLinkActive"
-          onClick={e => {
-            e.preventDefault();
-            setSelectedFilter(TypeFilter.Active);
-            onlyActive();
-          }}
-        >
-          Active
-        </a>
-
-        <a
-          href="#/completed"
-          className={classNames('filter__link', {
-            selected: selectedFilter === TypeFilter.Completed,
-          })}
-          data-cy="FilterLinkCompleted"
-          onClick={e => {
-            e.preventDefault();
-            setSelectedFilter(TypeFilter.Completed);
-            onlyCompleted();
-          }}
-        >
-          Completed
-        </a>
+        {arrayButtons.map(button => (
+          <a
+            href={button.href}
+            key={button.id}
+            className={classNames('filter__link', {
+              selected: selectedFilter === button.typeFilter,
+            })}
+            data-cy="FilterLinkAll"
+            onClick={e => {
+              e.preventDefault();
+              setSelectedFilter(button.typeFilter);
+              if (button.typeFilter === TypeFilter.All) {
+                updateList();
+              } else if (button.typeFilter === TypeFilter.Active) {
+                onlyActive();
+              } else {
+                onlyCompleted();
+              }
+            }}
+          >
+            {button.title}
+          </a>
+        ))}
       </nav>
 
       <button
