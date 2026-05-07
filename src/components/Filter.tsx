@@ -29,24 +29,35 @@ function getCount(serverTodos: Todo[] | null) {
   return count;
 }
 
-const arrayButtons = [
+type ArrayButtons = {
+  title: string;
+  href: string;
+  typeFilter: TypeFilter;
+  id: number;
+  link: string;
+};
+
+const arrayButtons: ArrayButtons[] = [
   {
     title: 'All',
     href: '#/',
     typeFilter: TypeFilter.All,
     id: 1,
+    link: 'FilterLinkAll',
   },
   {
     title: 'Active',
     href: '#/active',
     typeFilter: TypeFilter.Active,
     id: 2,
+    link: 'FilterLinkActive',
   },
   {
     title: 'Completed',
     href: '#/completed',
     typeFilter: TypeFilter.Completed,
     id: 3,
+    link: 'FilterLinkCompleted',
   },
 ];
 
@@ -104,9 +115,7 @@ export const Filter: React.FC<Props> = ({
             className={classNames('filter__link', {
               selected: selectedFilter === button.typeFilter,
             })}
-            data-cy={
-              button.typeFilter === TypeFilter.All ? 'FilterLinkAll' : ''
-            }
+            data-cy={button.link}
             onClick={e => {
               e.preventDefault();
               setSelectedFilter(button.typeFilter);
